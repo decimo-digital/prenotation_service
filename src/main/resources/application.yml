@@ -1,0 +1,8 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  datasource:
+    url: jdbc:${DB_TYPE:postgresql}://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ceposto}
+    username: ${DB_USERNAME:admin}
+    password: ${DB_PASSWORD:ceposto2021}
