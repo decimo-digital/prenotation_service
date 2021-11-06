@@ -1,10 +1,11 @@
 package it.decimo.prenotation_service.service;
 
-import java.util.Date;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import it.decimo.prenotation_service.connector.MerchantConnector;
+import it.decimo.prenotation_service.dto.MerchantStatusDto;
+import it.decimo.prenotation_service.dto.PrenotationRequestDto;
 import it.decimo.prenotation_service.exception.MissingTableException;
 import it.decimo.prenotation_service.exception.NotEnoughSeatsException;
 import it.decimo.prenotation_service.model.Prenotation;
@@ -23,6 +24,8 @@ public class PrenotationService {
     private PrenotationRepository prenotationRepository;
     @Autowired
     private UserPrenotationRepository userPrenotationRepository;
+    @Autowired
+    private MerchantConnector merchantConnector;
 
     /**
      * Effettua un controllo sul numero di posti liberi di un dato locale
@@ -44,40 +47,58 @@ public class PrenotationService {
      * @param toPrenotate Quanti posti sono da allocare alla prenotazione
      * @param userId      L'id dell'utente che sta richiedendo la prenotazione
      * 
+     * @return Se viene effettuata correttamente, l'istanza della prenotazione
+     * 
      * @throws MissingTableException   Se non vi è nessun tavolo che permette di
      *                                 effettuare la prenotazione
      * @throws NotEnoughSeatsException Se il locale scelto non ha abbastanza posti
      *                                 liberi per ospitare la prenotazione
      */
-    public void makePrenotation(int merchantId, int toPrenotate, int userId)
+    public Prenotation makePrenotation(PrenotationRequestDto dto)
             throws MissingTableException, NotEnoughSeatsException {
 
-        if (!hasEnoughFreeSeats(merchantId, toPrenotate)) {
+        if (!hasEnoughFreeSeats(dto.getMerchantId(), dto.getSeatsAmount())) {
             throw new NotEnoughSeatsException();
         }
 
-        log.info("User {} is prenotation {} seats to {}", userId, toPrenotate, merchantId);
-        var table = tableRepository.findAvailableTable(merchantId, toPrenotate);
+        log.info("User {} is prenotation {} seats to {}", dto.getRequesterId(), dto.getSeatsAmount(),
+                dto.getMerchantId());
+        var table = tableRepository.findAvailableTable(dto.getMerchantId(), dto.getSeatsAmount());
 
         if (table == null) {
             throw new MissingTableException();
         }
 
-        var prenotation = Prenotation.builder().merchantId(merchantId).tableNumber(table.getTableNumber())
-                .dateOfPrenotation(new Date().toInstant().toEpochMilli()).build();
+        Prenotation prenotation = new Prenotation(dto.getMerchantId(), table.getTableNumber(), dto.getDate());
 
         var savedPrenotation = prenotationRepository.save(prenotation);
         log.info("Saved prenotation of id {}", savedPrenotation.getId());
 
-        userPrenotationRepository.addPrenotation(userId, savedPrenotation.getId());
-        log.info("Added prenotation to user {}", userId);
+        userPrenotationRepository.addPrenotation(dto.getRequesterId(), savedPrenotation.getId());
+        log.info("Added prenotation to user {}", dto.getRequesterId());
 
-        tableRepository.updateTableStatus(merchantId, table.getTableNumber(), TableStatus.prenotated.getValue());
-        log.info("Updated status of table {}-{}", merchantId, table.getTableNumber());
+        tableRepository.updateTableStatus(dto.getMerchantId(), table.getTableNumber(),
+                TableStatus.prenotated.getValue());
+        log.info("Updated status of table {}-{}", dto.getMerchantId(), table.getTableNumber());
 
-        // TODO aggiornare il dato ridondato nel merchant_service
+        updateMerchantStatus(dto.getMerchantId());
 
-        // TODO ritornare l'ok sulla prenotazione
+        log.info("Updated merchant status");
+
+        return savedPrenotation;
+    }
+
+    /**
+     * Aggiorna lo stato dei posti occupati del {@link Merchant} dato il suo id
+     * 
+     * @param merchantId L'id del merchant che bisogna aggiornare
+     */
+    public void updateMerchantStatus(int merchantId) {
+        final var total = tableRepository.getTotalCapacity(merchantId);
+        final var free = tableRepository.getFreeSeats(merchantId);
+
+        final var update = MerchantStatusDto.builder().freeSeats(free).totalSeats(total).id(merchantId).build();
+        merchantConnector.sendUpdate(update);
     }
 
 }
