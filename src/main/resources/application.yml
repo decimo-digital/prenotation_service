@@ -9,4 +9,4 @@ spring:
 
 app:
   connector:
-    merchantConnector: ${MERCHANT_SERVICE_URL:https://merchant_service:8080}
+    merchantConnector: ${MERCHANT_SERVICE_HOST:https://merchant_service:8080}
