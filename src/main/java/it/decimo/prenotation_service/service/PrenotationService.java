@@ -1,5 +1,7 @@
 package it.decimo.prenotation_service.service;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -10,6 +12,7 @@ import it.decimo.prenotation_service.exception.MissingTableException;
 import it.decimo.prenotation_service.exception.NotEnoughSeatsException;
 import it.decimo.prenotation_service.model.Prenotation;
 import it.decimo.prenotation_service.model.TableStatus;
+import it.decimo.prenotation_service.model.UserPrenotation;
 import it.decimo.prenotation_service.repository.PrenotationRepository;
 import it.decimo.prenotation_service.repository.TableRepository;
 import it.decimo.prenotation_service.repository.UserPrenotationRepository;
@@ -101,4 +104,13 @@ public class PrenotationService {
         merchantConnector.sendUpdate(update);
     }
 
+    /**
+     * Ritorna le prenotazioni effettuate da un certo utente
+     * 
+     * @param userId L'id dell'utente che ha effettuato le prenotazioni
+     * @return La lista delle prenotazioni effettuate
+     */
+    public List<UserPrenotation> getPrenotations(int userId) {
+        return userPrenotationRepository.findAllByUserId(userId);
+    }
 }
