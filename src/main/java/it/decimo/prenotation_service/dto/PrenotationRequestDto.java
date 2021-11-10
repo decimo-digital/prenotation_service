@@ -1,6 +1,6 @@
 package it.decimo.prenotation_service.dto;
 
-import java.util.Date;
+import java.sql.Date;
 
 import it.decimo.prenotation_service.model.Prenotation;
 import lombok.AllArgsConstructor;
@@ -36,11 +36,7 @@ public class PrenotationRequestDto {
      * 
      */
     public Prenotation toPrenotation() {
-        return new Prenotation() {
-            {
-                this.setDateOfPrenotation(date);
-                this.setMerchantId(merchantId);
-            }
-        };
+        return Prenotation.builder().owner(requesterId).merchantId(merchantId).amount(seatsAmount)
+                .dateOfPrenotation(date).build();
     }
 }

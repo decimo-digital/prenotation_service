@@ -23,7 +23,7 @@ public class MerchantTable {
     private int merchantId;
 
     @Id
-    @Column(name = "table_number")
+    @Column(name = "number")
     private int tableNumber;
 
     @Column(name = "seats")
@@ -43,6 +43,6 @@ class MerchantTableId implements Serializable {
     private int merchantId;
 
     @Id
-    @Column(name = "table_number")
+    @Column(name = "number")
     private int tableNumber;
 }

@@ -11,7 +11,6 @@ import it.decimo.prenotation_service.dto.PrenotationRequestDto;
 import it.decimo.prenotation_service.exception.MissingTableException;
 import it.decimo.prenotation_service.exception.NotEnoughSeatsException;
 import it.decimo.prenotation_service.model.Prenotation;
-import it.decimo.prenotation_service.model.TableStatus;
 import it.decimo.prenotation_service.model.UserPrenotation;
 import it.decimo.prenotation_service.repository.PrenotationRepository;
 import it.decimo.prenotation_service.repository.TableRepository;
@@ -66,23 +65,15 @@ public class PrenotationService {
 
         log.info("User {} is prenotation {} seats to {}", dto.getRequesterId(), dto.getSeatsAmount(),
                 dto.getMerchantId());
-        var table = tableRepository.findAvailableTable(dto.getMerchantId(), dto.getSeatsAmount());
 
-        if (table == null) {
-            throw new MissingTableException();
-        }
-
-        Prenotation prenotation = new Prenotation(dto.getMerchantId(), table.getTableNumber(), dto.getDate());
+        Prenotation prenotation = Prenotation.builder().merchantId(dto.getMerchantId()).amount(dto.getSeatsAmount())
+                .dateOfPrenotation(dto.getDate()).build();
 
         var savedPrenotation = prenotationRepository.save(prenotation);
         log.info("Saved prenotation of id {}", savedPrenotation.getId());
 
         userPrenotationRepository.addPrenotation(dto.getRequesterId(), savedPrenotation.getId());
         log.info("Added prenotation to user {}", dto.getRequesterId());
-
-        tableRepository.updateTableStatus(dto.getMerchantId(), table.getTableNumber(),
-                TableStatus.prenotated.getValue());
-        log.info("Updated status of table {}-{}", dto.getMerchantId(), table.getTableNumber());
 
         updateMerchantStatus(dto.getMerchantId());
 
