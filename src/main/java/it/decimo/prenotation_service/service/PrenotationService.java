@@ -5,29 +5,23 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import it.decimo.prenotation_service.connector.MerchantConnector;
-import it.decimo.prenotation_service.dto.MerchantStatusDto;
 import it.decimo.prenotation_service.dto.PrenotationRequestDto;
 import it.decimo.prenotation_service.exception.MissingTableException;
 import it.decimo.prenotation_service.exception.NotEnoughSeatsException;
 import it.decimo.prenotation_service.model.Prenotation;
 import it.decimo.prenotation_service.model.UserPrenotation;
 import it.decimo.prenotation_service.repository.PrenotationRepository;
-import it.decimo.prenotation_service.repository.TableRepository;
 import it.decimo.prenotation_service.repository.UserPrenotationRepository;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
 public class PrenotationService {
-    @Autowired
-    private TableRepository tableRepository;
+
     @Autowired
     private PrenotationRepository prenotationRepository;
     @Autowired
     private UserPrenotationRepository userPrenotationRepository;
-    @Autowired
-    private MerchantConnector merchantConnector;
 
     /**
      * Effettua un controllo sul numero di posti liberi di un dato locale
@@ -38,7 +32,9 @@ public class PrenotationService {
      *         prenotazione, {@literal false} altrimenti
      */
     private boolean hasEnoughFreeSeats(int merchantId, int toPrenotate) {
-        int capacity = tableRepository.getFreeSeats(merchantId);
+        // int capacity = tableRepository.getFreeSeats(merchantId);
+        // TODO bisogna ritornare la capacità attuale del merchant
+        int capacity = 1000;
         return capacity >= toPrenotate;
     }
 
@@ -88,11 +84,7 @@ public class PrenotationService {
      * @param merchantId L'id del merchant che bisogna aggiornare
      */
     public void updateMerchantStatus(int merchantId) {
-        final var total = tableRepository.getTotalCapacity(merchantId);
-        final var free = tableRepository.getFreeSeats(merchantId);
-
-        final var update = MerchantStatusDto.builder().freeSeats(free).totalSeats(total).id(merchantId).build();
-        merchantConnector.sendUpdate(update);
+        // TODO Bisogna aggiornare lo status del merchant
     }
 
     /**
