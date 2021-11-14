@@ -67,7 +67,7 @@ public class PrenotationController {
             @ApiResponse(responseCode = "401", description = "L'utente richiedente non è l'owner della prenotazione e non può aggiungere gente", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
             @ApiResponse(responseCode = "404", description = "Non è stata trovata nessuna prenotazione esistente", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
             @ApiResponse(responseCode = "422", description = "L'utente era già stato registrato nella prenotazione", content = @Content(schema = @Schema(implementation = BasicResponse.class))) })
-    public ResponseEntity<Object> addUserToPrenotation(@RequestHeader("requesterId") int requesterId,
+    public ResponseEntity<Object> addUserToPrenotation(@PathVariable("requesterId") int requesterId,
             @PathParam(value = "prenotationId") int prenotationId, @PathVariable int userId) {
         try {
             prenotationService.addUserToPrenotation(requesterId, prenotationId, userId);
