@@ -10,5 +10,5 @@ import it.decimo.prenotation_service.model.UserPrenotation;
 @Repository
 public interface UserPrenotationRepository extends JpaRepository<UserPrenotation, Integer> {
 
-    List<UserPrenotation> findAllByUser(int userId);
+    List<UserPrenotation> findAllByUserId(int userId);
 }

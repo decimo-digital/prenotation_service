@@ -106,7 +106,7 @@ public class PrenotationService {
      * @return La lista delle prenotazioni effettuate
      */
     public List<UserPrenotation> getPrenotations(int userId) {
-        return userPrenotationRepository.findAllByUser(userId);
+        return userPrenotationRepository.findAllByUserId(userId);
     }
 
     /**
