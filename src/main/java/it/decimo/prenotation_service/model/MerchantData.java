@@ -17,9 +17,6 @@ public class MerchantData {
     @Column(name = "merchant_id")
     private int merchantId;
 
-    //@Column(name = "openings")
-    //private String openings;
-
     @Column(name = "free_seats")
     private int freeSeats;
 

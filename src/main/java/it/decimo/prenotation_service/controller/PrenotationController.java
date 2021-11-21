@@ -64,11 +64,11 @@ public class PrenotationController {
             @ApiResponse(responseCode = "401", description = "L'utente richiedente non è l'owner della prenotazione e non può aggiungere gente", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
             @ApiResponse(responseCode = "404", description = "Non è stata trovata nessuna prenotazione esistente", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
             @ApiResponse(responseCode = "422", description = "L'utente era già stato registrato nella prenotazione", content = @Content(schema = @Schema(implementation = BasicResponse.class))) })
-    public ResponseEntity<Object> addUserToPrenotation(@PathVariable("requesterId") int requesterId,
-            @PathParam(value = "prenotationId") int prenotationId, @PathVariable int userId) {
+    public ResponseEntity<Object> addUserToPrenotation(@PathVariable(value = "prenotationId") int prenotationId,
+            @PathParam(value = "userId") int userId, @PathParam("requesterId") int requesterId) {
         try {
             prenotationService.addUserToPrenotation(requesterId, prenotationId, userId);
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok().body(new BasicResponse("User inserted successfully", "OK"));
         } catch (NotFoundException e) {
             return ResponseEntity.status(404).body(new BasicResponse(e.getMessage(), "NOT_FOUND"));
         } catch (NotAuthorizedException e) {

@@ -2,6 +2,7 @@ package it.decimo.prenotation_service.service;
 
 import java.util.Calendar;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ import it.decimo.prenotation_service.model.UserPrenotation;
 import it.decimo.prenotation_service.repository.MerchantDataRepository;
 import it.decimo.prenotation_service.repository.PrenotationRepository;
 import it.decimo.prenotation_service.repository.UserPrenotationRepository;
+import it.decimo.prenotation_service.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -27,6 +29,8 @@ public class PrenotationService {
     private UserPrenotationRepository userPrenotationRepository;
     @Autowired
     private MerchantDataRepository merchantDataRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     /**
      * Effettua un controllo sul numero di posti liberi di un dato locale
@@ -88,7 +92,7 @@ public class PrenotationService {
                 dto.getMerchantId());
 
         Prenotation prenotation = Prenotation.builder().merchantId(dto.getMerchantId()).amount(dto.getSeatsAmount())
-                .dateOfPrenotation(dto.getDate()).build();
+                .dateOfPrenotation(dto.getDate()).owner(dto.getRequesterId()).build();
 
         var savedPrenotation = prenotationRepository.save(prenotation);
         log.info("Saved prenotation of id {}", savedPrenotation.getId());
@@ -105,8 +109,10 @@ public class PrenotationService {
      * @param userId L'id dell'utente che ha effettuato le prenotazioni
      * @return La lista delle prenotazioni effettuate
      */
-    public List<UserPrenotation> getPrenotations(int userId) {
-        return userPrenotationRepository.findAllByUserId(userId);
+    public List<Prenotation> getPrenotations(int userId) {
+        return userPrenotationRepository.findAllByUserId(userId).stream()
+                .map(up -> prenotationRepository.findById(up.getPrenotation()).orElse(null)).filter(p -> p != null)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -117,10 +123,13 @@ public class PrenotationService {
      * @param userId        L'id dell'utente da aggiungere
      * 
      * @throws NotFoundException      Se non esiste nessuna prenotazione con l'id
-     * @throws NotAuthorizedException Se l'utente non è autorizzato ad aggiungere utenti alla prenotazione
+     * @throws NotAuthorizedException Se l'utente non è autorizzato ad aggiungere
+     *                                utenti alla prenotazione
      */
     public void addUserToPrenotation(int requesterId, int prenotationId, int userId)
             throws NotFoundException, NotAuthorizedException {
+
+        userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User to add not found"));
 
         final var prenotation = prenotationRepository.findById(prenotationId)
                 .orElseThrow(() -> new NotFoundException("Missing prenotation of id " + prenotationId));

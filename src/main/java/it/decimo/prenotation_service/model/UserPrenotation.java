@@ -24,6 +24,8 @@ public class UserPrenotation {
     @Id
     @Column(name = "user_id")
     private int userId;
+
+    
 }
 
 @Data

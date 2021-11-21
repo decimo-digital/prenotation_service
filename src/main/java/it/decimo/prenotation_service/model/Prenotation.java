@@ -33,6 +33,9 @@ public class Prenotation {
     @Column(name = "date")
     private Date dateOfPrenotation;
 
+    @Column(name = "slot")
+    private int slot;
+
     @Column(name = "amount")
     private int amount;
 }
