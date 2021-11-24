@@ -33,8 +33,20 @@ public class Prenotation {
     @Column(name = "merchant")
     private int merchantId;
 
+    /**
+     * Contiene la data di effettuata prenotazione (comprensiva di tempo)
+     */
+    @Column(name = "date_millis")
+    private long dateOfPrenotation;
+
+    /**
+     * Contiene giorno-mese-anno della prenotazione
+     * 
+     * Utilizzato solo per scopi di query
+     */
     @Column(name = "date")
-    private Date dateOfPrenotation;
+    @JsonIgnore
+    private Date date;
 
     @Column(name = "amount")
     private int amount;
@@ -42,4 +54,8 @@ public class Prenotation {
     @JsonIgnore
     @Transient
     private boolean isValid;
+
+    public java.util.Date getDateOfPrenotation() {
+        return new java.util.Date(dateOfPrenotation);
+    }
 }

@@ -1,8 +1,7 @@
 package it.decimo.prenotation_service.dto;
 
-import java.sql.Date;
+import java.util.Date;
 
-import it.decimo.prenotation_service.model.Prenotation;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -32,11 +31,9 @@ public class PrenotationRequestDto {
     private int requesterId;
 
     /**
-     * Genera una {@link Prenotation} a partire dal DTO
-     * 
+     * Ritorna la data di creazione della prenotazione in millisecondi dall'epoch
      */
-    public Prenotation toPrenotation() {
-        return Prenotation.builder().owner(requesterId).merchantId(merchantId).amount(seatsAmount)
-                .dateOfPrenotation(date).build();
+    public long getDate() {
+        return date.toInstant().toEpochMilli();
     }
 }

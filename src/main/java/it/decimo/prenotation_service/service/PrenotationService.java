@@ -2,19 +2,19 @@ package it.decimo.prenotation_service.service;
 
 import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import it.decimo.prenotation_service.dto.PrenotationRequestDto;
+import it.decimo.prenotation_service.exception.AlreadyPrenotedException;
 import it.decimo.prenotation_service.exception.NotAuthorizedException;
 import it.decimo.prenotation_service.exception.NotEnoughSeatsException;
 import it.decimo.prenotation_service.exception.NotFoundException;
 import it.decimo.prenotation_service.exception.PrenotationExpiredException;
-import it.decimo.prenotation_service.exception.AlreadyPrenotedException;
 import it.decimo.prenotation_service.model.Prenotation;
 import it.decimo.prenotation_service.model.UserPrenotation;
 import it.decimo.prenotation_service.repository.MerchantDataRepository;
@@ -51,7 +51,9 @@ public class PrenotationService {
                                 () -> new NotFoundException("Merchant " + dto.getMerchantId() + " doesn't exists"));
 
                 final var calendar = Calendar.getInstance();
-                calendar.setTime(dto.getDate());
+
+                final var date = new Date(dto.getDate());
+                calendar.setTime(date);
 
                 final var year = calendar.get(Calendar.YEAR);
                 final var month = calendar.get(Calendar.MONTH);
@@ -62,7 +64,10 @@ public class PrenotationService {
                                 dto.getMerchantId());
 
                 log.info("Retrieved {} prenotation for merchant {} on date {}", prenotations.size(),
-                                dto.getMerchantId(), dto.getDate());
+                                dto.getMerchantId(), new Date(dto.getDate()));
+
+                // TODO sono da controllare tutte le prenotazioni che potrebbero essere scadute
+                // dato il campo date_millis
 
                 final var totalAmount = prenotations.stream().map(p -> p.getAmount()).reduce((p1, p2) -> p1 + p2)
                                 .orElse(0);
@@ -101,6 +106,9 @@ public class PrenotationService {
                                 .amount(dto.getSeatsAmount()).dateOfPrenotation(dto.getDate())
                                 .owner(dto.getRequesterId()).build();
 
+                // Imposta la data in formato sql per filtrare le query
+                prenotation.setDate(new java.sql.Date(dto.getDate()));
+
                 var savedPrenotation = prenotationRepository.save(prenotation);
                 log.info("Saved prenotation of id {}", savedPrenotation.getId());
 
@@ -119,13 +127,13 @@ public class PrenotationService {
          * @param userId L'id dell'utente che ha effettuato le prenotazioni
          * @return La lista delle prenotazioni effettuate
          */
-        public List<Prenotation> getPrenotations(int userId) {
+        public Collection<Prenotation> getPrenotations(int userId) {
                 return userPrenotationRepository.findAllByUser(userId).stream()
                                 .map(up -> prenotationRepository.findById(up.getPrenotation()).orElse(null))
                                 .filter(p -> p != null).map((prenotation) -> {
                                         prenotation.setValid(isPrenotationValid(prenotation));
                                         return prenotation;
-                                }).collect(Collectors.toList());
+                                }).collect(Collectors.toSet());
         }
 
         /**
