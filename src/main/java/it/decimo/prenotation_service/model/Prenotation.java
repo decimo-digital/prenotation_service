@@ -6,6 +6,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -42,5 +43,6 @@ public class Prenotation {
     private int amount;
 
     @JsonIgnore
+    @Transient
     private boolean isValid;
 }
