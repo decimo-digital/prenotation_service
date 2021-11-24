@@ -104,7 +104,10 @@ public class PrenotationService {
                 var savedPrenotation = prenotationRepository.save(prenotation);
                 log.info("Saved prenotation of id {}", savedPrenotation.getId());
 
-                userPrenotationRepository.save(new UserPrenotation(savedPrenotation.getId(), dto.getRequesterId()));
+                UserPrenotation userPrenotation = new UserPrenotation(savedPrenotation.getId(), dto.getRequesterId());
+
+                log.info("Adding user {} to prenotation {}", dto.getRequesterId(), savedPrenotation.getId());
+                userPrenotationRepository.save(userPrenotation);
                 log.info("Added prenotation to user {}", dto.getRequesterId());
 
                 return savedPrenotation;

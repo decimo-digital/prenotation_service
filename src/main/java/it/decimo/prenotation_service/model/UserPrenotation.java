@@ -22,7 +22,7 @@ public class UserPrenotation {
     private int prenotation;
 
     @Id
-    @Column(name = "user")
+    @Column(name = "user_id")
     private int user;
 
     
@@ -33,6 +33,6 @@ class PrenotationId implements Serializable {
     @Column(name = "prenotation_id")
     private int prenotation;
 
-    @Column(name = "user")
+    @Column(name = "user_id")
     private int user;
 }
