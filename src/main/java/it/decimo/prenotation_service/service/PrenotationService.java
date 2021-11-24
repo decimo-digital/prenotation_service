@@ -117,7 +117,7 @@ public class PrenotationService {
          * @return La lista delle prenotazioni effettuate
          */
         public List<Prenotation> getPrenotations(int userId) {
-                return userPrenotationRepository.findAllByUserId(userId).stream()
+                return userPrenotationRepository.findAllByUser(userId).stream()
                                 .map(up -> prenotationRepository.findById(up.getPrenotation()).orElse(null))
                                 .filter(p -> p != null).map((prenotation) -> {
                                         prenotation.setValid(isPrenotationValid(prenotation));
@@ -154,7 +154,7 @@ public class PrenotationService {
                 if (!isPrenotationValid(prenotation))
                         throw new PrenotationExpiredException("The prenotation is not expired");
 
-                if (userPrenotationRepository.findAllByUserId(userId).stream()
+                if (userPrenotationRepository.findAllByUser(userId).stream()
                                 .anyMatch(p -> p.getPrenotation() == prenotationId))
                         throw new AlreadyPrenotedException("User already prenotated");
 
