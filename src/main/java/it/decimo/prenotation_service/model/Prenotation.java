@@ -7,6 +7,8 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -38,4 +40,7 @@ public class Prenotation {
 
     @Column(name = "amount")
     private int amount;
+
+    @JsonIgnore
+    private boolean isValid;
 }
