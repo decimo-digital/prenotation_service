@@ -51,7 +51,6 @@ public class Prenotation {
     @Column(name = "amount")
     private int amount;
 
-    @JsonIgnore
     @Transient
     private boolean isValid;
 
