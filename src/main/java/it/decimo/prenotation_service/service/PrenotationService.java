@@ -122,6 +122,35 @@ public class PrenotationService {
         }
 
         /**
+         * Modifica la prenotazione con il body nuovo
+         * 
+         * @param prenotation Le modifiche da apportare alla prenotazione
+         * @param requesterId L'utente che ha richiesto la modifica
+         * 
+         * @throws NotFoundException      Se non esiste nessuna prenotazione con l'id
+         *                                specificato
+         * @throws NotAuthorizedException Se l'utente non è il proprietario della
+         *                                prenotazione
+         * 
+         * @return la prenotazione modificata
+         */
+        public Prenotation patchPrenotation(Prenotation prenotation, int requesterId)
+                        throws NotFoundException, NotAuthorizedException {
+                final var saved = prenotationRepository.findById(prenotation.getId());
+                if (saved.isPresent()) {
+                        if (saved.get().getOwner() != requesterId) {
+                                throw new NotAuthorizedException("L'utente non può modificare la prenotazione");
+                        }
+
+                        return prenotationRepository.save(prenotation);
+
+                } else {
+                        throw new NotFoundException("La prenotazione non esiste");
+                }
+
+        }
+
+        /**
          * Ritorna le prenotazioni effettuate da un certo utente
          * 
          * @param userId L'id dell'utente che ha effettuato le prenotazioni

@@ -5,9 +5,11 @@ import javax.websocket.server.PathParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -56,6 +58,24 @@ public class PrenotationController {
     public ResponseEntity<Object> getUserPrenotations(@PathVariable(name = "userId") int requesterId) {
         final var prenotations = prenotationService.getPrenotations(requesterId);
         return ResponseEntity.ok().body(prenotations);
+    }
+
+    @PatchMapping("/")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "La prenotazione è stata modificata con successo", content = @Content(schema = @Schema(implementation = Prenotation.class))),
+            @ApiResponse(responseCode = "404", description = "La prenotazione non esiste", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
+            @ApiResponse(responseCode = "401", description = "L'utente non può modificare la prenotazione", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
+    })
+    public ResponseEntity<Object> editPrenotation(@PathParam("userId") int requesterId,
+            @RequestBody Prenotation prenotation) {
+        try {
+            final var newPrenotation = prenotationService.patchPrenotation(prenotation, requesterId);
+            return ResponseEntity.ok().body(newPrenotation);
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(404).body(new BasicResponse("Prenotation not found", "PRENOTATION_NOT_FOUND"));
+        } catch (NotAuthorizedException e) {
+            return ResponseEntity.status(401).body(new BasicResponse(e.getMessage(), "NOT_AUTHORIZED"));
+        }
     }
 
     @PostMapping("/{prenotationId}")

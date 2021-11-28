@@ -51,6 +51,9 @@ public class Prenotation {
     @Column(name = "amount")
     private int amount;
 
+    @Column(name = "prenotation_enabled")
+    private boolean enabled;
+
     @Transient
     private boolean isValid;
 
