@@ -88,6 +88,7 @@ public class PrenotationService {
 
                 Prenotation prenotation = Prenotation.builder().merchantId(dto.getMerchantId())
                                 .amount(dto.getSeatsAmount()).dateOfPrenotation(dto.getDate())
+                                .enabled(true)
                                 .owner(dto.getRequesterId()).build();
 
                 // Imposta la data in formato sql per filtrare le query
