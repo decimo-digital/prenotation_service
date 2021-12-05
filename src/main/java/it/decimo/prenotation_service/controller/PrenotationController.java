@@ -64,10 +64,10 @@ public class PrenotationController {
             @ApiResponse(responseCode = "404", description = "La prenotazione non esiste", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
             @ApiResponse(responseCode = "401", description = "L'utente non può modificare la prenotazione", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
     })
-    public ResponseEntity<Object> editPrenotation(@PathParam("userId") int requesterId,
+    public ResponseEntity<Object> editPrenotation(@PathParam("userId") int userId,
             @RequestBody Prenotation prenotation) {
         try {
-            final var newPrenotation = prenotationService.patchPrenotation(prenotation, requesterId);
+            final var newPrenotation = prenotationService.patchPrenotation(prenotation, userId);
             return ResponseEntity.ok().body(newPrenotation);
         } catch (NotFoundException e) {
             return ResponseEntity.status(404).body(new BasicResponse("Prenotation not found", "PRENOTATION_NOT_FOUND"));

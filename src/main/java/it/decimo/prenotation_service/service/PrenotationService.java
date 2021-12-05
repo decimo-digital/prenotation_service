@@ -120,18 +120,29 @@ public class PrenotationService {
          */
         public Prenotation patchPrenotation(Prenotation prenotation, int requesterId)
                         throws NotFoundException, NotAuthorizedException {
-                final var saved = prenotationRepository.findById(prenotation.getId());
-                if (saved.isPresent()) {
-                        if (saved.get().getOwner() != requesterId) {
-                                throw new NotAuthorizedException("L'utente non può modificare la prenotazione");
-                        }
+                final var saved = prenotationRepository.findById(prenotation.getId())
+                                .orElseThrow(() -> new NotFoundException("La prenotazione non esiste"));
 
-                        return prenotationRepository.save(prenotation);
-
-                } else {
-                        throw new NotFoundException("La prenotazione non esiste");
+                if (saved.getOwner() != requesterId) {
+                        throw new NotAuthorizedException("L'utente non può modificare la prenotazione");
                 }
 
+                log.info("Updating prenotation {}", prenotation.getId());
+
+                if (prenotation.getAmount() != null) {
+                        // TODO controllare se è si può aumentare il numero di coperti
+                        saved.setAmount(prenotation.getAmount());
+                }
+
+                if (prenotation.getDate() != null) {
+                        saved.setDate(prenotation.getDate());
+                }
+
+                if (prenotation.getDateOfPrenotation() != null) {
+                        saved.setDateOfPrenotation(prenotation.getDateOfPrenotation().getTime());
+                }
+
+                return prenotationRepository.save(saved);
         }
 
         /**
@@ -141,6 +152,7 @@ public class PrenotationService {
          * @return La lista delle prenotazioni effettuate
          */
         public Collection<Prenotation> getPrenotationsForUser(int userId) {
+                log.info("Getting prenotations for user {}", userId);
                 return userPrenotationRepository.findAllByUser(userId).stream()
                                 .map(up -> prenotationRepository.findById(up.getPrenotation()).orElse(null))
                                 .filter(p -> p != null).map((prenotation) -> {
@@ -197,21 +209,29 @@ public class PrenotationService {
          */
         public void addUserToPrenotation(int requesterId, int prenotationId, int userId) throws NotFoundException,
                         NotAuthorizedException, PrenotationExpiredException, AlreadyPrenotedException {
-
+                log.info("Adding user {} to prenotation {}", userId, prenotationId);
                 userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User to add not found"));
 
                 final var prenotation = prenotationRepository.findById(prenotationId)
                                 .orElseThrow(() -> new NotFoundException("Missing prenotation of id " + prenotationId));
 
-                if (prenotation.getOwner() != requesterId)
+                if (prenotation.getOwner() != requesterId) {
+                        log.error("User {} is not the owner of prenotation {}", requesterId, prenotationId);
                         throw new NotAuthorizedException("The requester user is not the prenotation's owner");
+                }
 
-                if (!isPrenotationValid(prenotation))
+                if (!isPrenotationValid(prenotation)) {
+                        log.error("Prenotation {} is expired", prenotationId);
                         throw new PrenotationExpiredException("The prenotation is not expired");
+                }
+
+                // TODO controllare se ci sono ancora slot liberi all'interno della prenotazione
 
                 if (userPrenotationRepository.findAllByUser(userId).stream()
-                                .anyMatch(p -> p.getPrenotation() == prenotationId))
+                                .anyMatch(p -> p.getPrenotation() == prenotationId)) {
+                        log.error("User {} is already prenotated for prenotation {}", userId, prenotationId);
                         throw new AlreadyPrenotedException("User already prenotated");
+                }
 
                 userPrenotationRepository.save(new UserPrenotation(prenotationId, userId));
         }

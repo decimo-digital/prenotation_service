@@ -25,19 +25,19 @@ public class Prenotation {
     @Id
     @GeneratedValue
     @Column(name = "id")
-    private int id;
+    private Integer id;
 
     @Column(name = "owner")
-    private int owner;
+    private Integer owner;
 
     @Column(name = "merchant")
-    private int merchantId;
+    private Integer merchantId;
 
     /**
      * Contiene la data di effettuata prenotazione (comprensiva di tempo)
      */
     @Column(name = "date_millis")
-    private long dateOfPrenotation;
+    private Long dateOfPrenotation;
 
     /**
      * Contiene giorno-mese-anno della prenotazione
@@ -49,19 +49,22 @@ public class Prenotation {
     private Date date;
 
     @Column(name = "amount")
-    private int amount;
+    private Integer amount;
 
     @Column(name = "prenotation_enabled")
     /**
      * Di default vale {@code true} perchè una prenotazione è sempre abilitata,
      * se vale {@code false} significa che è stata cancellata
      */
-    private boolean enabled;
+    private Boolean enabled;
 
     @Transient
     private boolean isValid;
 
     public java.util.Date getDateOfPrenotation() {
+        if (dateOfPrenotation == null || dateOfPrenotation == 0l) {
+            return null;
+        }
         return new java.util.Date(dateOfPrenotation);
     }
 }
