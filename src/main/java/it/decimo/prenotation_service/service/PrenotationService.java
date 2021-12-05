@@ -1,7 +1,6 @@
 package it.decimo.prenotation_service.service;
 
 import java.time.temporal.ChronoUnit;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.stream.Collectors;
@@ -17,6 +16,7 @@ import it.decimo.prenotation_service.exception.NotFoundException;
 import it.decimo.prenotation_service.exception.PrenotationExpiredException;
 import it.decimo.prenotation_service.model.Prenotation;
 import it.decimo.prenotation_service.model.UserPrenotation;
+import it.decimo.prenotation_service.repository.CustomRepository;
 import it.decimo.prenotation_service.repository.MerchantDataRepository;
 import it.decimo.prenotation_service.repository.PrenotationRepository;
 import it.decimo.prenotation_service.repository.UserPrenotationRepository;
@@ -35,6 +35,8 @@ public class PrenotationService {
         private MerchantDataRepository merchantDataRepository;
         @Autowired
         private UserRepository userRepository;
+        @Autowired
+        private CustomRepository customRepository;
 
         /**
          * Effettua un controllo sul numero di posti liberi di un dato locale
@@ -47,32 +49,12 @@ public class PrenotationService {
          */
         private boolean hasEnoughFreeSeats(PrenotationRequestDto dto) throws NotFoundException {
 
-                final var data = merchantDataRepository.findById(dto.getMerchantId()).orElseThrow(
+                final var merchantData = merchantDataRepository.findById(dto.getMerchantId()).orElseThrow(
                                 () -> new NotFoundException("Merchant " + dto.getMerchantId() + " doesn't exists"));
 
-                final var calendar = Calendar.getInstance();
+                final var data = customRepository.getMerchantData(dto.getMerchantId());
 
-                final var date = new Date(dto.getDate());
-                calendar.setTime(date);
-
-                final var year = calendar.get(Calendar.YEAR);
-                final var month = calendar.get(Calendar.MONTH);
-                final var day = calendar.get(Calendar.DAY_OF_MONTH);
-
-                // Recupera le prenotazioni effettaute per il giorno specificato
-                final var prenotations = prenotationRepository.findByPrenotationDateAndMerchantId(year, month, day,
-                                dto.getMerchantId());
-
-                log.info("Retrieved {} prenotation for merchant {} on date {}", prenotations.size(),
-                                dto.getMerchantId(), new Date(dto.getDate()));
-
-                // TODO sono da controllare tutte le prenotazioni che potrebbero essere scadute
-                // dato il campo date_millis
-
-                final var totalAmount = prenotations.stream().map(p -> p.getAmount()).reduce((p1, p2) -> p1 + p2)
-                                .orElse(0);
-
-                return totalAmount <= data.getTotalSeats();
+                return merchantData.getTotalSeats() <= data.getTotalSeats();
         }
 
         /**

@@ -52,6 +52,10 @@ public class Prenotation {
     private int amount;
 
     @Column(name = "prenotation_enabled")
+    /**
+     * Di default vale {@code true} perchè una prenotazione è sempre abilitata,
+     * se vale {@code false} significa che è stata cancellata
+     */
     private boolean enabled;
 
     @Transient
