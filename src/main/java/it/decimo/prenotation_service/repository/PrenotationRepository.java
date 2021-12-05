@@ -19,4 +19,6 @@ public interface PrenotationRepository extends JpaRepository<Prenotation, Intege
     @Query(value = "SELECT * FROM prenotation WHERE merchant=:merchantId AND date_part('year', date) = :year AND date_part('month',date) = :month AND date_part('day', date) = :day", nativeQuery = true)
     List<Prenotation> findByPrenotationDateAndMerchantId(@Param("year") int year, @Param("month") int month,
             @Param("day") int day, @Param(value = "merchantId") int merchantId);
+
+    List<Prenotation> findAllByMerchantId(int merchantId);
 }

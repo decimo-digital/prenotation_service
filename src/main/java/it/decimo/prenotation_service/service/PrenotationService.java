@@ -18,6 +18,7 @@ import it.decimo.prenotation_service.model.Prenotation;
 import it.decimo.prenotation_service.model.UserPrenotation;
 import it.decimo.prenotation_service.repository.CustomRepository;
 import it.decimo.prenotation_service.repository.MerchantDataRepository;
+import it.decimo.prenotation_service.repository.MerchantRepository;
 import it.decimo.prenotation_service.repository.PrenotationRepository;
 import it.decimo.prenotation_service.repository.UserPrenotationRepository;
 import it.decimo.prenotation_service.repository.UserRepository;
@@ -26,7 +27,8 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
 public class PrenotationService {
-
+        @Autowired
+        private MerchantRepository merchantRepository;
         @Autowired
         private PrenotationRepository prenotationRepository;
         @Autowired
@@ -138,13 +140,44 @@ public class PrenotationService {
          * @param userId L'id dell'utente che ha effettuato le prenotazioni
          * @return La lista delle prenotazioni effettuate
          */
-        public Collection<Prenotation> getPrenotations(int userId) {
+        public Collection<Prenotation> getPrenotationsForUser(int userId) {
                 return userPrenotationRepository.findAllByUser(userId).stream()
                                 .map(up -> prenotationRepository.findById(up.getPrenotation()).orElse(null))
                                 .filter(p -> p != null).map((prenotation) -> {
                                         prenotation.setValid(isPrenotationValid(prenotation));
                                         return prenotation;
                                 }).collect(Collectors.toSet());
+        }
+
+        /**
+         * Recupera le prenotazioni che sono state effettuate ad un determinato
+         * 
+         * @param merchantId  L'id del locale di cui ci interessano le prenotazioni
+         * @param requesterId Chi sta richiedendo i dati
+         * 
+         * @throws NotFoundException      se non esiste nessun locale con l'id
+         *                                specificato
+         * @throws NotAuthorizedException Se l'utente non è il proprietario del locale
+         */
+        public Collection<Prenotation> getPrenotationsForMerchant(int merchantId, int requesterId)
+                        throws NotFoundException, NotAuthorizedException {
+                log.info("User {} is requesting prenotations for merchant {}", requesterId,
+                                merchantId);
+                final var merchant = merchantRepository.findById(merchantId).orElseThrow(
+                                () -> new NotFoundException("Non esiste nessun merchant con id " + merchantId));
+
+                if (merchant.getOwner() != requesterId) {
+                        log.error("User {} is not the owner of merchant {}", requesterId, merchantId);
+                        throw new NotAuthorizedException("L'utente non può accedere a questa funzione");
+                }
+
+                log.info("Collecting prenotations for merchant {}", merchantId);
+
+                return prenotationRepository.findAllByMerchantId(merchantId).stream()
+                                .map(prenotation -> {
+                                        prenotation.setValid(isPrenotationValid(prenotation));
+                                        return prenotation;
+                                }).collect(Collectors.toList());
         }
 
         /**

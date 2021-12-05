@@ -55,7 +55,7 @@ public class PrenotationController {
     @GetMapping("/{userId}")
     @ApiResponse(responseCode = "200", description = "Lista delle prenotazioni effettuate", content = @Content(array = @ArraySchema(schema = @Schema(implementation = UserPrenotation.class), minItems = 0, uniqueItems = true)))
     public ResponseEntity<Object> getUserPrenotations(@PathVariable(name = "userId") int requesterId) {
-        final var prenotations = prenotationService.getPrenotations(requesterId);
+        final var prenotations = prenotationService.getPrenotationsForUser(requesterId);
         return ResponseEntity.ok().body(prenotations);
     }
 
@@ -75,6 +75,25 @@ public class PrenotationController {
         } catch (NotAuthorizedException e) {
             return ResponseEntity.status(401).body(new BasicResponse(e.getMessage(), "NOT_AUTHORIZED"));
         }
+    }
+
+    @GetMapping("/{merchantId}/prenotations")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista delle prenotazioni effettuate", content = @Content(array = @ArraySchema(schema = @Schema(implementation = Prenotation.class), minItems = 0, uniqueItems = true))),
+            @ApiResponse(responseCode = "404", description = "Non è stato trovato il locale richiesto", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
+            @ApiResponse(responseCode = "401", description = "L'utente richiedente non ha i permessi necessari per la risorsa", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
+    })
+    public ResponseEntity<Object> getPrenotations(@PathVariable(name = "merchantId") int merchantId,
+            @PathParam("userId") int userId) {
+        try {
+            final var prenotations = prenotationService.getPrenotationsForMerchant(merchantId, userId);
+            return ResponseEntity.ok().body(prenotations);
+        } catch (NotAuthorizedException e) {
+            return ResponseEntity.status(401).body(new BasicResponse(e.getMessage(), "NOT_AUTHORIZED"));
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(404).body(new BasicResponse(e.getMessage(), "PRENOTATION_NOT_FOUND"));
+        }
+
     }
 
     @PostMapping("/{prenotationId}")
