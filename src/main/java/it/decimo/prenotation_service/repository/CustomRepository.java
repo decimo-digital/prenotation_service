@@ -1,13 +1,11 @@
 package it.decimo.prenotation_service.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import it.decimo.prenotation_service.model.Merchant;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-
-import it.decimo.prenotation_service.model.Merchant;
-import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
@@ -41,4 +39,18 @@ public class CustomRepository {
         }
     }
 
+    /**
+     * Recupera l'id del proprietario del merchant richiesto
+     *
+     * @param merchantId id del merchant
+     * @return id del proprietario, -1 se non viene trovato
+     */
+    public int getMerchantOwner(int merchantId) {
+        final var query = "SELECT owner FROM merchant WHERE id = ?";
+        final var owner = jdbcTemplate.queryForObject(query, Integer.class, merchantId);
+        if (owner == null) {
+            return -1;
+        }
+        return owner;
+    }
 }

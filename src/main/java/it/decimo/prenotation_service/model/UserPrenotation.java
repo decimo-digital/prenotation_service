@@ -1,15 +1,14 @@
 package it.decimo.prenotation_service.model;
 
-import java.io.Serializable;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.io.Serializable;
 
 @Entity(name = "prenotation_to_users")
 @Data
@@ -25,7 +24,7 @@ public class UserPrenotation {
     @Column(name = "user_id")
     private int user;
 
-    
+
 }
 
 @Data

@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/")
 public class ReadinessController {
-    
+
     @GetMapping
     public ResponseEntity<Object> readiness() {
         return ResponseEntity.ok("Prenotation Service is up and running");

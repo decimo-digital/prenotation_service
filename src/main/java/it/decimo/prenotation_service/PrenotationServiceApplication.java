@@ -12,15 +12,15 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 @SpringBootApplication(exclude = SecurityAutoConfiguration.class)
 @EnableJpaRepositories
 @EnableWebMvc
-@CrossOrigin(origins = { "*" })
+@CrossOrigin(origins = {"*"})
 public class PrenotationServiceApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(PrenotationServiceApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(PrenotationServiceApplication.class, args);
+    }
 
-	@Bean
-	public RestTemplate restTemplate() {
-		return new RestTemplate();
-	}
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
 }

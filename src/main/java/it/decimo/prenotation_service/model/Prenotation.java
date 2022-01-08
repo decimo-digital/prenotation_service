@@ -1,19 +1,13 @@
 package it.decimo.prenotation_service.model;
 
-import java.sql.Date;
-
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Transient;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import javax.persistence.*;
+import java.sql.Date;
 
 @Data
 @AllArgsConstructor
@@ -41,7 +35,7 @@ public class Prenotation {
 
     /**
      * Contiene giorno-mese-anno della prenotazione
-     * 
+     * <p>
      * Utilizzato solo per scopi di query
      */
     @Column(name = "date")
@@ -51,11 +45,11 @@ public class Prenotation {
     @Column(name = "amount")
     private Integer amount;
 
-    @Column(name = "prenotation_enabled")
     /**
      * Di default vale {@code true} perchè una prenotazione è sempre abilitata,
      * se vale {@code false} significa che è stata cancellata
      */
+    @Column(name = "prenotation_enabled")
     private Boolean enabled;
 
     @Transient
