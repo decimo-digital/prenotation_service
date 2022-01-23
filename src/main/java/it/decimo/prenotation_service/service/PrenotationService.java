@@ -137,6 +137,30 @@ public class PrenotationService {
     }
 
     /**
+     * Elimina una prenotazione dato il suo io
+     *
+     * @param prenotationId l'id della prenotazione da eliminare
+     * @param requesterId   L'utente che ha richiesto la cancellazione (deve esserne il proprietario)
+     * @throws NotFoundException      Se non esiste nessuna prenotazione con l'id specificato
+     * @throws NotAuthorizedException Se l'utente non è il proprietario della prenotazione
+     */
+    public void deletePrenotation(int prenotationId, int requesterId) throws NotFoundException, NotAuthorizedException {
+        log.info("User {} is trying to delete prenotation {}", prenotationId, requesterId);
+        final var prenotation = prenotationRepository.findById(prenotationId);
+        if (prenotation.isEmpty()) {
+            log.warn("Prenotation of id {} was not found", prenotationId);
+            throw new NotFoundException("La prenotazione non esiste");
+        }
+
+        if (prenotation.get().getOwner() != requesterId) {
+            log.warn("User {} tried to delete prenotation {} without permissions", requesterId, prenotationId);
+            throw new NotAuthorizedException("L'utente non può cancellare la prenotazione");
+        }
+
+        prenotationRepository.deleteById(prenotationId);
+    }
+
+    /**
      * Ritorna le prenotazioni effettuate da un certo utente
      *
      * @param userId L'id dell'utente che ha effettuato le prenotazioni

@@ -70,6 +70,24 @@ public class PrenotationController {
         }
     }
 
+    @DeleteMapping("/{prenotationId}")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "La prenotazione è stata cancellata con successo", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
+            @ApiResponse(responseCode = "404", description = "La prenotazione non esiste", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
+            @ApiResponse(responseCode = "401", description = "L'utente non può cancellare la prenotazione", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
+    })
+    public ResponseEntity<Object> deletePrenotation(@PathVariable(name = "prenotationId") int prenotationId, @PathParam("userId") int userId) {
+        try {
+            prenotationService.deletePrenotation(prenotationId, userId);
+            return ResponseEntity.ok().body(new BasicResponse("Prenotation deleted", "PRENOTATION_DELETED"));
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(404).body(new BasicResponse("Prenotation not found", "PRENOTATION_NOT_FOUND"));
+        } catch (NotAuthorizedException e) {
+            return ResponseEntity.status(401).body(new BasicResponse(e.getMessage(), "NOT_AUTHORIZED"));
+        }
+
+    }
+
     @GetMapping("/{merchantId}/prenotations")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista delle prenotazioni effettuate", content = @Content(array = @ArraySchema(schema = @Schema(implementation = Prenotation.class), minItems = 0, uniqueItems = true))),
