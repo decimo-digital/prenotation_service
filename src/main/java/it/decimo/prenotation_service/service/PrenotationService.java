@@ -6,7 +6,6 @@ import it.decimo.prenotation_service.model.Prenotation;
 import it.decimo.prenotation_service.model.UserPrenotation;
 import it.decimo.prenotation_service.repository.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.temporal.ChronoUnit;
@@ -18,18 +17,19 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class PrenotationService {
-    @Autowired
-    private MerchantRepository merchantRepository;
-    @Autowired
-    private PrenotationRepository prenotationRepository;
-    @Autowired
-    private UserPrenotationRepository userPrenotationRepository;
-    @Autowired
-    private MerchantDataRepository merchantDataRepository;
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private CustomRepository customRepository;
+    private final MerchantRepository merchantRepository;
+    private final PrenotationRepository prenotationRepository;
+    private final UserPrenotationRepository userPrenotationRepository;
+    private final UserRepository userRepository;
+    private final CustomRepository customRepository;
+
+    public PrenotationService(MerchantRepository merchantRepository, PrenotationRepository prenotationRepository, UserPrenotationRepository userPrenotationRepository, UserRepository userRepository, CustomRepository customRepository) {
+        this.merchantRepository = merchantRepository;
+        this.prenotationRepository = prenotationRepository;
+        this.userPrenotationRepository = userPrenotationRepository;
+        this.userRepository = userRepository;
+        this.customRepository = customRepository;
+    }
 
     /**
      * Effettua un controllo sul numero di posti liberi di un dato locale
@@ -63,13 +63,15 @@ public class PrenotationService {
             throw new NotEnoughSeatsException();
         }
 
-        log.info("User {} is prenotation {} seats to {}", dto.getRequesterId(), dto.getSeatsAmount(),
+        log.info("User {} is prenotating {} seats to {}", dto.getRequesterId(), dto.getSeatsAmount(),
                 dto.getMerchantId());
 
-        Prenotation prenotation = Prenotation.builder().merchantId(dto.getMerchantId())
+        Prenotation prenotation = Prenotation.builder()
+                .merchantId(dto.getMerchantId())
                 .amount(dto.getSeatsAmount()).dateOfPrenotation(dto.getDate())
                 .enabled(true)
-                .owner(dto.getRequesterId()).build();
+                .owner(dto.getRequesterId())
+                .build();
 
         // Imposta la data in formato sql per filtrare le query
         prenotation.setDate(new java.sql.Date(dto.getDate()));
@@ -107,7 +109,7 @@ public class PrenotationService {
 
         if (prenotation.getAmount() != null) {
             if (!hasEnoughFreeSeats(prenotation.getMerchantId(), prenotation.getAmount())) {
-                log.info("User {} tried to increment seats to {} but merchant hasn't enough free space", requesterId, prenotation.getAmount());
+                log.info("User {} tried to increment seats to {} but merchant {} hasn't enough free space", requesterId, prenotation.getMerchantId(), prenotation.getAmount());
             } else {
                 log.info("User {} is updating prenotation {} with {} seats", requesterId, prenotation.getId(), prenotation.getAmount());
                 saved.setAmount(prenotation.getAmount());
