@@ -27,7 +27,7 @@ public class CustomRepository {
         final var map = jdbcTemplate.queryForList(sql);
 
         if (map.size() != 1) {
-            log.error("Got an unexpected amount of merchants", map.size());
+            log.error("Got an unexpected amount of merchants: {}", map.size());
             throw new RuntimeException("Got an unexpected amount of merchants");
         }
 

@@ -102,9 +102,6 @@ public class PrenotationService {
         final var saved = prenotationRepository.findById(prenotation.getId())
                 .orElseThrow(() -> new NotFoundException("La prenotazione non esiste"));
 
-        if (saved.getOwner() != requesterId) {
-            throw new NotAuthorizedException("L'utente non può modificare la prenotazione");
-        }
 
         log.info("Updating prenotation {}", prenotation.getId());
 
@@ -126,13 +123,8 @@ public class PrenotationService {
         }
 
         if (!prenotation.getEnabled()) {
-            final var hasPermissions = canRemovePrenotation(requesterId, prenotation.getId());
-            if (hasPermissions) {
-                log.info("User {} is disabling prenotation {}", requesterId, prenotation.getId());
-                saved.setEnabled(false);
-            } else {
-                log.warn("User {} tried to delete prenotation {} without permissions", requesterId, prenotation.getId());
-            }
+            saved.setEnabled(false);
+            log.info("User {} deleted prenotation {}", requesterId, prenotation.getId());
         }
 
         return prenotationRepository.save(saved);
