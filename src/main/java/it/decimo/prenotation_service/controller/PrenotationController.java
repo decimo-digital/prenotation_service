@@ -61,11 +61,14 @@ public class PrenotationController {
     public ResponseEntity<Object> editPrenotation(@PathParam("userId") int userId,
                                                   @RequestBody Prenotation prenotation) {
         try {
+            log.info("User {} is trying to edit prenotation {}", userId, prenotation.getId());
             final var newPrenotation = prenotationService.patchPrenotation(prenotation, userId);
             return ResponseEntity.ok().body(newPrenotation);
         } catch (NotFoundException e) {
+            log.warn("Prenotation {} not found", prenotation.getId());
             return ResponseEntity.status(404).body(new BasicResponse("Prenotation not found", "PRENOTATION_NOT_FOUND"));
         } catch (NotAuthorizedException e) {
+            log.warn("User {} is not authorized to edit prenotation {}", userId, prenotation.getId());
             return ResponseEntity.status(401).body(new BasicResponse(e.getMessage(), "NOT_AUTHORIZED"));
         }
     }

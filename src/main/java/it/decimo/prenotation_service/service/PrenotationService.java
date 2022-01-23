@@ -112,6 +112,7 @@ public class PrenotationService {
             if (!hasEnoughFreeSeats(prenotation.getMerchantId(), prenotation.getAmount())) {
                 log.info("User {} tried to increment seats to {} but merchant hasn't enough free space", requesterId, prenotation.getAmount());
             } else {
+                log.info("User {} is updating prenotation {} with {} seats", requesterId, prenotation.getId(), prenotation.getAmount());
                 saved.setAmount(prenotation.getAmount());
             }
         }
@@ -127,6 +128,7 @@ public class PrenotationService {
         if (!prenotation.getEnabled()) {
             final var hasPermissions = canRemovePrenotation(requesterId, prenotation.getId());
             if (hasPermissions) {
+                log.info("User {} is disabling prenotation {}", requesterId, prenotation.getId());
                 saved.setEnabled(false);
             } else {
                 log.warn("User {} tried to delete prenotation {} without permissions", requesterId, prenotation.getId());
