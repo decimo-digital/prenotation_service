@@ -142,10 +142,10 @@ public class PrenotationService {
      * @throws NotAuthorizedException Se l'utente non è il proprietario della prenotazione
      */
     public void deletePrenotation(int prenotationId, int requesterId) throws NotFoundException, NotAuthorizedException {
-        log.info("User {} is trying to delete prenotation {}", prenotationId, requesterId);
+        log.info("User {} is trying to delete prenotation {}", requesterId, prenotationId);
         final var prenotation = prenotationRepository.findById(prenotationId);
         if (prenotation.isEmpty()) {
-            log.warn("Prenotation of id {} was not found", prenotationId);
+            log.warn("Prenotation {} was not found", prenotationId);
             throw new NotFoundException("La prenotazione non esiste");
         }
 
