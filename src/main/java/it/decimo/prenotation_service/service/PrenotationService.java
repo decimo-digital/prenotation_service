@@ -154,7 +154,9 @@ public class PrenotationService {
             throw new NotAuthorizedException("L'utente non può cancellare la prenotazione");
         }
 
-        prenotationRepository.deleteById(prenotationId);
+        var modified = prenotation.get();
+        modified.setEnabled(false);
+        prenotationRepository.save(modified);
     }
 
     /**
