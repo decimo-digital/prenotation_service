@@ -35,7 +35,7 @@ public class Merchant {
     @JsonAlias(value = "owner")
     @Column(name = "owner")
     private Integer owner;
-    @Column(name = "free_seats")
+    @Transient
     @JsonAlias(value = "free_seats")
     private Integer freeSeats;
     @Column(name = "description")

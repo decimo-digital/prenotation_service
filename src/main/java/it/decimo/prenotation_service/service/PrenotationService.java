@@ -38,12 +38,13 @@ public class PrenotationService {
      * @param seats      Il numero di posti da prenotare
      * @return {@literal true} se il locale ha abbastanza posti per accettare la
      * prenotazione, {@literal false} altrimenti
-     * @throws NotFoundException Se il locale non è stato trovato
      */
-    private boolean hasEnoughFreeSeats(int merchantId, int seats) throws NotFoundException {
+    private boolean hasEnoughFreeSeats(int merchantId, int seats) {
         final var data = customRepository.getMerchantData(merchantId);
 
-        return data.getFreeSeats() >= seats;
+        var hasEnough = data.getFreeSeats() >= seats;
+        log.info("Merchant {} has {} free seats, {} seats requested", merchantId, data.getFreeSeats(), seats);
+        return hasEnough;
     }
 
     /**
