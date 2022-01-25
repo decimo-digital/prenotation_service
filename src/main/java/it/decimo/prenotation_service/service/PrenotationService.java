@@ -1,14 +1,18 @@
 package it.decimo.prenotation_service.service;
 
+import it.decimo.prenotation_service.connectors.MerchantServiceConnector;
+import it.decimo.prenotation_service.dto.Merchant;
 import it.decimo.prenotation_service.dto.PrenotationRequestDto;
 import it.decimo.prenotation_service.exception.*;
 import it.decimo.prenotation_service.model.Prenotation;
 import it.decimo.prenotation_service.model.UserPrenotation;
-import it.decimo.prenotation_service.repository.*;
+import it.decimo.prenotation_service.repository.PrenotationRepository;
+import it.decimo.prenotation_service.repository.UserPrenotationRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Objects;
@@ -17,18 +21,14 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class PrenotationService {
-    private final MerchantRepository merchantRepository;
     private final PrenotationRepository prenotationRepository;
     private final UserPrenotationRepository userPrenotationRepository;
-    private final UserRepository userRepository;
-    private final CustomRepository customRepository;
+    private final MerchantServiceConnector merchantServiceConnector;
 
-    public PrenotationService(MerchantRepository merchantRepository, PrenotationRepository prenotationRepository, UserPrenotationRepository userPrenotationRepository, UserRepository userRepository, CustomRepository customRepository) {
-        this.merchantRepository = merchantRepository;
+    public PrenotationService(PrenotationRepository prenotationRepository, UserPrenotationRepository userPrenotationRepository, MerchantServiceConnector merchantServiceConnector) {
         this.prenotationRepository = prenotationRepository;
         this.userPrenotationRepository = userPrenotationRepository;
-        this.userRepository = userRepository;
-        this.customRepository = customRepository;
+        this.merchantServiceConnector = merchantServiceConnector;
     }
 
     /**
@@ -38,12 +38,15 @@ public class PrenotationService {
      * @param seats      Il numero di posti da prenotare
      * @return {@literal true} se il locale ha abbastanza posti per accettare la
      * prenotazione, {@literal false} altrimenti
-     * @throws NotFoundException Se il locale non è stato trovato
      */
-    private boolean hasEnoughFreeSeats(int merchantId, int seats) throws NotFoundException {
-        final var data = customRepository.getMerchantData(merchantId);
-
-        return data.getFreeSeats() >= seats;
+    private boolean hasEnoughFreeSeats(int merchantId, int seats) {
+        try {
+            final var data = merchantServiceConnector.getMerchant(merchantId);
+            return data.getFreeSeats() >= seats;
+        } catch (Exception e) {
+            log.error("Failed to retrieve merchant {}", merchantId, e);
+            return false;
+        }
     }
 
     /**
@@ -184,21 +187,25 @@ public class PrenotationService {
             throws NotFoundException, NotAuthorizedException {
         log.info("User {} is requesting prenotations for merchant {}", requesterId,
                 merchantId);
-        final var merchant = merchantRepository.findById(merchantId).orElseThrow(
-                () -> new NotFoundException("Non esiste nessun merchant con id " + merchantId));
+        try {
+            Merchant merchant = merchantServiceConnector.getMerchant(merchantId);
 
-        if (merchant.getOwner() != requesterId) {
-            log.error("User {} is not the owner of merchant {}", requesterId, merchantId);
-            throw new NotAuthorizedException("L'utente non può accedere a questa funzione");
+            if (merchant.getOwner() != requesterId) {
+                log.error("User {} is not the owner of merchant {}", requesterId, merchantId);
+                throw new NotAuthorizedException("L'utente non può accedere a questa funzione");
+            }
+
+            log.info("Collecting prenotations for merchant {}", merchantId);
+
+            return prenotationRepository.findAllByMerchantId(merchantId).stream()
+                    .map(prenotation -> {
+                        prenotation.setValid(isPrenotationValid(prenotation));
+                        return prenotation;
+                    }).collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to retrieve prenotations for merchant {}", merchantId, e);
+            return new ArrayList<>();
         }
-
-        log.info("Collecting prenotations for merchant {}", merchantId);
-
-        return prenotationRepository.findAllByMerchantId(merchantId).stream()
-                .map(prenotation -> {
-                    prenotation.setValid(isPrenotationValid(prenotation));
-                    return prenotation;
-                }).collect(Collectors.toList());
     }
 
     /**
@@ -218,7 +225,6 @@ public class PrenotationService {
     public void addUserToPrenotation(int requesterId, int prenotationId, int userId) throws NotFoundException,
             NotAuthorizedException, PrenotationExpiredException, AlreadyPrenotedException {
         log.info("Adding user {} to prenotation {}", userId, prenotationId);
-        userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User to add not found"));
 
         final var prenotation = prenotationRepository.findById(prenotationId)
                 .orElseThrow(() -> new NotFoundException("Missing prenotation of id " + prenotationId));
@@ -262,9 +268,9 @@ public class PrenotationService {
         if (prenotation.get().getOwner() == userId) {
             return true;
         } else {
-            final var merchantOwner = customRepository.getMerchantOwner(prenotation.get().getMerchantId());
-            if (merchantOwner == userId) {
-                log.info("User {} is the owner of merchant {}", userId, merchantOwner);
+            final var merchant = merchantServiceConnector.getMerchant(prenotation.get().getMerchantId());
+            if (merchant.getOwner() == userId) {
+                log.info("User {} is the owner of merchant {}", userId, merchant.getOwner());
                 return true;
             }
         }
