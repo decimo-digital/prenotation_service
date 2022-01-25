@@ -1,7 +1,6 @@
 package it.decimo.prenotation_service.service;
 
 import it.decimo.prenotation_service.connectors.MerchantServiceConnector;
-import it.decimo.prenotation_service.dto.Merchant;
 import it.decimo.prenotation_service.dto.PrenotationRequestDto;
 import it.decimo.prenotation_service.exception.*;
 import it.decimo.prenotation_service.model.Prenotation;
@@ -188,10 +187,7 @@ public class PrenotationService {
             throws NotFoundException {
         log.info("Requesting prenotations for merchant {}", merchantId);
         try {
-            Merchant merchant = merchantServiceConnector.getMerchant(merchantId);
-
             log.info("Collecting prenotations for merchant {}", merchantId);
-
             return prenotationRepository.findAllByMerchantId(merchantId).stream()
                     .peek(prenotation -> prenotation.setValid(isPrenotationValid(prenotation)))
                     .collect(Collectors.toList());
