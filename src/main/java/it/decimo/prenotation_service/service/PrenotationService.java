@@ -42,6 +42,7 @@ public class PrenotationService {
     private boolean hasEnoughFreeSeats(int merchantId, int seats) {
         try {
             final var data = merchantServiceConnector.getMerchant(merchantId);
+            log.info("Merchant {} has {} free seats, {} seats requested", merchantId, data.getFreeSeats(), seats);
             return data.getFreeSeats() >= seats;
         } catch (Exception e) {
             log.error("Failed to retrieve merchant {}", merchantId, e);
@@ -144,10 +145,10 @@ public class PrenotationService {
      * @throws NotAuthorizedException Se l'utente non è il proprietario della prenotazione
      */
     public void deletePrenotation(int prenotationId, int requesterId) throws NotFoundException, NotAuthorizedException {
-        log.info("User {} is trying to delete prenotation {}", prenotationId, requesterId);
+        log.info("User {} is trying to delete prenotation {}", requesterId, prenotationId);
         final var prenotation = prenotationRepository.findById(prenotationId);
         if (prenotation.isEmpty()) {
-            log.warn("Prenotation of id {} was not found", prenotationId);
+            log.warn("Prenotation {} was not found", prenotationId);
             throw new NotFoundException("La prenotazione non esiste");
         }
 
@@ -156,7 +157,9 @@ public class PrenotationService {
             throw new NotAuthorizedException("L'utente non può cancellare la prenotazione");
         }
 
-        prenotationRepository.deleteById(prenotationId);
+        var modified = prenotation.get();
+        modified.setEnabled(false);
+        prenotationRepository.save(modified);
     }
 
     /**
