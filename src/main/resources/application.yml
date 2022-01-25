@@ -12,5 +12,5 @@ spring:
         ddl-auto: updateg
 
 app:
-  connector:
+  connectors:
     merchantServiceBaseUrl: ${MERCHANT_SERVICE_HOST:https://merchant_service:8080}
