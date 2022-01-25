@@ -1,15 +1,13 @@
 package it.decimo.prenotation_service.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 import java.sql.Date;
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -17,20 +15,20 @@ import java.sql.Date;
 public class Prenotation {
 
     @Id
-    @GeneratedValue
-    @Column(name = "id")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "prenotation_seq")
+    @Column(name = "id", nullable = false, updatable = false)
     private Integer id;
 
-    @Column(name = "owner")
+    @Column(name = "owner", nullable = false)
     private Integer owner;
 
-    @Column(name = "merchant")
+    @Column(name = "merchant", nullable = false)
     private Integer merchantId;
 
     /**
      * Contiene la data di effettuata prenotazione (comprensiva di tempo)
      */
-    @Column(name = "date_millis")
+    @Column(name = "date_millis", nullable = false)
     private Long dateOfPrenotation;
 
     /**
@@ -38,25 +36,29 @@ public class Prenotation {
      * <p>
      * Utilizzato solo per scopi di query
      */
-    @Column(name = "date")
+    @Column(name = "date", nullable = false)
     @JsonIgnore
     private Date date;
 
-    @Column(name = "amount")
+    @Column(name = "amount", nullable = false)
     private Integer amount;
 
     /**
      * Di default vale {@code true} perchè una prenotazione è sempre abilitata,
      * se vale {@code false} significa che è stata cancellata
      */
-    @Column(name = "prenotation_enabled")
+    @Column(name = "prenotation_enabled", nullable = false)
     private Boolean enabled;
 
+    /**
+     * Vale {@literal true} se la prenotazione è ancora all'interno del range per il quale si
+     * considerano attive le prenotazioni (di base mezz'ora)
+     */
     @Transient
     private boolean isValid;
 
     public java.util.Date getDateOfPrenotation() {
-        if (dateOfPrenotation == null || dateOfPrenotation == 0l) {
+        if (dateOfPrenotation == null || dateOfPrenotation == 0L) {
             return null;
         }
         return new java.util.Date(dateOfPrenotation);

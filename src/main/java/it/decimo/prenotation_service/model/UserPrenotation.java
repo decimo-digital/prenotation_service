@@ -17,21 +17,19 @@ import java.io.Serializable;
 @IdClass(PrenotationId.class)
 public class UserPrenotation {
     @Id
-    @Column(name = "prenotation_id")
+    @Column(name = "prenotation_id", nullable = false)
     private int prenotation;
 
     @Id
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false)
     private int user;
-
-
 }
 
 @Data
 class PrenotationId implements Serializable {
-    @Column(name = "prenotation_id")
+    @Column(name = "prenotation_id", nullable = false)
     private int prenotation;
 
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false)
     private int user;
 }

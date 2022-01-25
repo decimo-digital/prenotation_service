@@ -7,9 +7,8 @@ spring:
     username: ${DB_USERNAME:admin}
     password: ${DB_PASSWORD:ceposto2021}
   jpa:
-    properties:
-      hibernate:
-        ddl-auto: updateg
+    hibernate:
+      ddl-auto: update
 
 app:
   connectors:
