@@ -180,31 +180,21 @@ public class PrenotationService {
     /**
      * Recupera le prenotazioni che sono state effettuate ad un determinato
      *
-     * @param merchantId  L'id del locale di cui ci interessano le prenotazioni
-     * @param requesterId Chi sta richiedendo i dati
-     * @throws NotFoundException      se non esiste nessun locale con l'id
-     *                                specificato
-     * @throws NotAuthorizedException Se l'utente non è il proprietario del locale
+     * @param merchantId L'id del locale di cui ci interessano le prenotazioni
+     * @throws NotFoundException se non esiste nessun locale con l'id
+     *                           specificato
      */
-    public Collection<Prenotation> getPrenotationsForMerchant(int merchantId, int requesterId)
-            throws NotFoundException, NotAuthorizedException {
-        log.info("User {} is requesting prenotations for merchant {}", requesterId,
-                merchantId);
+    public Collection<Prenotation> getPrenotationsForMerchant(int merchantId)
+            throws NotFoundException {
+        log.info("Requesting prenotations for merchant {}", merchantId);
         try {
             Merchant merchant = merchantServiceConnector.getMerchant(merchantId);
-
-            if (merchant.getOwner() != requesterId) {
-                log.error("User {} is not the owner of merchant {}", requesterId, merchantId);
-                throw new NotAuthorizedException("L'utente non può accedere a questa funzione");
-            }
 
             log.info("Collecting prenotations for merchant {}", merchantId);
 
             return prenotationRepository.findAllByMerchantId(merchantId).stream()
-                    .map(prenotation -> {
-                        prenotation.setValid(isPrenotationValid(prenotation));
-                        return prenotation;
-                    }).collect(Collectors.toList());
+                    .peek(prenotation -> prenotation.setValid(isPrenotationValid(prenotation)))
+                    .collect(Collectors.toList());
         } catch (Exception e) {
             log.error("Failed to retrieve prenotations for merchant {}", merchantId, e);
             return new ArrayList<>();

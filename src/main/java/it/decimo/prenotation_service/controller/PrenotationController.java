@@ -97,13 +97,10 @@ public class PrenotationController {
             @ApiResponse(responseCode = "404", description = "Non è stato trovato il locale richiesto", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
             @ApiResponse(responseCode = "401", description = "L'utente richiedente non ha i permessi necessari per la risorsa", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
     })
-    public ResponseEntity<Object> getPrenotations(@PathVariable(name = "merchantId") int merchantId,
-                                                  @PathParam("userId") int userId) {
+    public ResponseEntity<Object> getPrenotations(@PathVariable(name = "merchantId") int merchantId) {
         try {
-            final var prenotations = prenotationService.getPrenotationsForMerchant(merchantId, userId);
+            final var prenotations = prenotationService.getPrenotationsForMerchant(merchantId);
             return ResponseEntity.ok().body(prenotations);
-        } catch (NotAuthorizedException e) {
-            return ResponseEntity.status(401).body(new BasicResponse(e.getMessage(), "NOT_AUTHORIZED"));
         } catch (NotFoundException e) {
             return ResponseEntity.status(404).body(new BasicResponse(e.getMessage(), "PRENOTATION_NOT_FOUND"));
         }
