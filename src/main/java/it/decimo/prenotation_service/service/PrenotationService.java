@@ -39,7 +39,7 @@ public class PrenotationService {
         try {
             final var data = merchantServiceConnector.getMerchant(merchantId);
             log.info("Merchant {} has {} free seats over {} total, {} seats requested", merchantId, data.getFreeSeats(), data.getTotalSeats(), seats);
-            return data.getFreeSeats() + seats <= data.getTotalSeats();
+            return seats <= data.getFreeSeats();
         } catch (Exception e) {
             log.error("Failed to retrieve merchant {}", merchantId, e);
             return false;
