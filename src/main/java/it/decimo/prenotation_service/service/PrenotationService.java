@@ -11,10 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,8 +38,12 @@ public class PrenotationService {
     private boolean hasEnoughFreeSeats(int merchantId, int seats) {
         try {
             final var data = merchantServiceConnector.getMerchant(merchantId);
-            log.info("Merchant {} has {} free seats, {} seats requested", merchantId, data.getFreeSeats(), seats);
-            return data.getFreeSeats() >= seats;
+            final var currentOccupation = getPrenotationsForMerchant(merchantId).stream()
+                    .filter(Prenotation::isValid)
+                    .map(Prenotation::getAmount)
+                    .reduce(0, Integer::sum);
+            log.info("Merchant {} has {} total seats, {} seats requested", merchantId, data.getTotalSeats(), seats);
+            return currentOccupation + seats <= data.getTotalSeats();
         } catch (Exception e) {
             log.error("Failed to retrieve merchant {}", merchantId, e);
             return false;
@@ -97,13 +98,14 @@ public class PrenotationService {
      * @param prenotation Le modifiche da apportare alla prenotazione
      * @param requesterId L'utente che ha richiesto la modifica
      * @return la prenotazione modificata
-     * @throws NotFoundException      Se non esiste nessuna prenotazione con l'id
-     *                                specificato
-     * @throws NotAuthorizedException Se l'utente non è il proprietario della
-     *                                prenotazione
+     * @throws NotFoundException       Se non esiste nessuna prenotazione con l'id
+     *                                 specificato
+     * @throws NotAuthorizedException  Se l'utente non è il proprietario della
+     *                                 prenotazione
+     * @throws NotEnoughSeatsException Se non ci sono abbastanza posti per aumentare la prenotazione
      */
     public Prenotation patchPrenotation(Prenotation prenotation, int requesterId)
-            throws NotFoundException, NotAuthorizedException {
+            throws NotFoundException, NotAuthorizedException, NotEnoughSeatsException {
         final var saved = prenotationRepository.findById(prenotation.getId())
                 .orElseThrow(() -> new NotFoundException("La prenotazione non esiste"));
 
@@ -113,6 +115,7 @@ public class PrenotationService {
         if (prenotation.getAmount() != null) {
             if (!hasEnoughFreeSeats(prenotation.getMerchantId(), prenotation.getAmount())) {
                 log.info("User {} tried to increment seats to {} but merchant {} hasn't enough free space", requesterId, prenotation.getMerchantId(), prenotation.getAmount());
+                throw new NotEnoughSeatsException("Il merchant richiesto non ha abbastanza posti liberi");
             } else {
                 log.info("User {} is updating prenotation {} with {} seats", requesterId, prenotation.getId(), prenotation.getAmount());
                 saved.setAmount(prenotation.getAmount());
@@ -183,7 +186,7 @@ public class PrenotationService {
      * @throws NotFoundException se non esiste nessun locale con l'id
      *                           specificato
      */
-    public Collection<Prenotation> getPrenotationsForMerchant(int merchantId)
+    public List<Prenotation> getPrenotationsForMerchant(int merchantId)
             throws NotFoundException {
         log.info("Requesting prenotations for merchant {}", merchantId);
         try {

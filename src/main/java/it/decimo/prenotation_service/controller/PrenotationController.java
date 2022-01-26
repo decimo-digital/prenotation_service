@@ -29,17 +29,13 @@ public class PrenotationController {
     private PrenotationService prenotationService;
 
     @PostMapping()
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "L'istanza della prenotazione effettuata", content = @Content(schema = @Schema(implementation = Prenotation.class))),
-            @ApiResponse(responseCode = "404", description = "Non è stato trovato il locale richiesto", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
-            @ApiResponse(responseCode = "422", description = "Non ci sono abbastanza posti a sedere", content = @Content(schema = @Schema(implementation = BasicResponse.class)))})
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "L'istanza della prenotazione effettuata", content = @Content(schema = @Schema(implementation = Prenotation.class))), @ApiResponse(responseCode = "404", description = "Non è stato trovato il locale richiesto", content = @Content(schema = @Schema(implementation = BasicResponse.class))), @ApiResponse(responseCode = "422", description = "Non ci sono abbastanza posti a sedere", content = @Content(schema = @Schema(implementation = BasicResponse.class)))})
     public ResponseEntity<Object> makePrenotation(@RequestBody PrenotationRequestDto prenotationRequest) {
         try {
             final var prenotation = prenotationService.makePrenotation(prenotationRequest);
             return ResponseEntity.ok().body(prenotation);
         } catch (NotEnoughSeatsException e) {
-            return ResponseEntity.status(422)
-                    .body(new BasicResponse("Merchant doesn't have enough seats", "NOT_ENOUGH_SEATS"));
+            return ResponseEntity.status(422).body(new BasicResponse("Merchant doesn't have enough seats", "NOT_ENOUGH_SEATS"));
         } catch (NotFoundException e) {
             return ResponseEntity.status(404).body(new BasicResponse("Table not found", "TABLE_NOT_FOUND"));
         }
@@ -53,13 +49,8 @@ public class PrenotationController {
     }
 
     @PostMapping("/update")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "La prenotazione è stata modificata con successo", content = @Content(schema = @Schema(implementation = Prenotation.class))),
-            @ApiResponse(responseCode = "404", description = "La prenotazione non esiste", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
-            @ApiResponse(responseCode = "401", description = "L'utente non può modificare la prenotazione", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
-    })
-    public ResponseEntity<Object> editPrenotation(@PathParam("userId") int userId,
-                                                  @RequestBody Prenotation prenotation) {
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "La prenotazione è stata modificata con successo", content = @Content(schema = @Schema(implementation = Prenotation.class))), @ApiResponse(responseCode = "404", description = "La prenotazione non esiste", content = @Content(schema = @Schema(implementation = BasicResponse.class))), @ApiResponse(responseCode = "401", description = "L'utente non può modificare la prenotazione", content = @Content(schema = @Schema(implementation = BasicResponse.class))), @ApiResponse(responseCode = "422", description = "Non ci sono abbastanza posti a sedere", content = @Content(schema = @Schema(implementation = BasicResponse.class)))})
+    public ResponseEntity<Object> editPrenotation(@PathParam("userId") int userId, @RequestBody Prenotation prenotation) {
         try {
             log.info("User {} is trying to edit prenotation {}", userId, prenotation.getId());
             final var newPrenotation = prenotationService.patchPrenotation(prenotation, userId);
@@ -70,15 +61,14 @@ public class PrenotationController {
         } catch (NotAuthorizedException e) {
             log.warn("User {} is not authorized to edit prenotation {}", userId, prenotation.getId());
             return ResponseEntity.status(401).body(new BasicResponse(e.getMessage(), "NOT_AUTHORIZED"));
+        } catch (NotEnoughSeatsException e) {
+            log.warn("Merchant {} hasn't enough seats", prenotation.getMerchantId());
+            return ResponseEntity.status(422).body(new BasicResponse(e.getMessage(), "NOT_AUTHORIZED"));
         }
     }
 
     @DeleteMapping("/{prenotationId}")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "La prenotazione è stata cancellata con successo", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
-            @ApiResponse(responseCode = "404", description = "La prenotazione non esiste", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
-            @ApiResponse(responseCode = "401", description = "L'utente non può cancellare la prenotazione", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
-    })
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "La prenotazione è stata cancellata con successo", content = @Content(schema = @Schema(implementation = BasicResponse.class))), @ApiResponse(responseCode = "404", description = "La prenotazione non esiste", content = @Content(schema = @Schema(implementation = BasicResponse.class))), @ApiResponse(responseCode = "401", description = "L'utente non può cancellare la prenotazione", content = @Content(schema = @Schema(implementation = BasicResponse.class))),})
     public ResponseEntity<Object> deletePrenotation(@PathVariable(name = "prenotationId") int prenotationId, @PathParam("userId") int userId) {
         try {
             prenotationService.deletePrenotation(prenotationId, userId);
@@ -92,11 +82,7 @@ public class PrenotationController {
     }
 
     @GetMapping("/{merchantId}/prenotations")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Lista delle prenotazioni effettuate", content = @Content(array = @ArraySchema(schema = @Schema(implementation = Prenotation.class), minItems = 0, uniqueItems = true))),
-            @ApiResponse(responseCode = "404", description = "Non è stato trovato il locale richiesto", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
-            @ApiResponse(responseCode = "401", description = "L'utente richiedente non ha i permessi necessari per la risorsa", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
-    })
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Lista delle prenotazioni effettuate", content = @Content(array = @ArraySchema(schema = @Schema(implementation = Prenotation.class), minItems = 0, uniqueItems = true))), @ApiResponse(responseCode = "404", description = "Non è stato trovato il locale richiesto", content = @Content(schema = @Schema(implementation = BasicResponse.class))), @ApiResponse(responseCode = "401", description = "L'utente richiedente non ha i permessi necessari per la risorsa", content = @Content(schema = @Schema(implementation = BasicResponse.class))),})
     public ResponseEntity<Object> getPrenotations(@PathVariable(name = "merchantId") int merchantId) {
         try {
             final var prenotations = prenotationService.getPrenotationsForMerchant(merchantId);
@@ -108,13 +94,8 @@ public class PrenotationController {
     }
 
     @PostMapping("/{prenotationId}")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "L'utente specificato è stato aggiunto alla prenotazione", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
-            @ApiResponse(responseCode = "401", description = "L'utente richiedente non è l'owner della prenotazione e non può aggiungere gente", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Non è stata trovata nessuna prenotazione esistente", content = @Content(schema = @Schema(implementation = BasicResponse.class))),
-            @ApiResponse(responseCode = "422", description = "L'utente era già stato registrato nella prenotazione", content = @Content(schema = @Schema(implementation = BasicResponse.class)))})
-    public ResponseEntity<Object> addUserToPrenotation(@PathVariable(value = "prenotationId") int prenotationId,
-                                                       @PathParam(value = "userId") int userId, @PathParam("requesterId") int requesterId) {
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "L'utente specificato è stato aggiunto alla prenotazione", content = @Content(schema = @Schema(implementation = BasicResponse.class))), @ApiResponse(responseCode = "401", description = "L'utente richiedente non è l'owner della prenotazione e non può aggiungere gente", content = @Content(schema = @Schema(implementation = BasicResponse.class))), @ApiResponse(responseCode = "404", description = "Non è stata trovata nessuna prenotazione esistente", content = @Content(schema = @Schema(implementation = BasicResponse.class))), @ApiResponse(responseCode = "422", description = "L'utente era già stato registrato nella prenotazione", content = @Content(schema = @Schema(implementation = BasicResponse.class)))})
+    public ResponseEntity<Object> addUserToPrenotation(@PathVariable(value = "prenotationId") int prenotationId, @PathParam(value = "userId") int userId, @PathParam("requesterId") int requesterId) {
         try {
             prenotationService.addUserToPrenotation(requesterId, prenotationId, userId);
             return ResponseEntity.ok().body(new BasicResponse("User inserted successfully", "OK"));
@@ -123,8 +104,7 @@ public class PrenotationController {
         } catch (NotAuthorizedException e) {
             return ResponseEntity.status(401).body(new BasicResponse(e.getMessage(), "NOT_AUTHORIZED"));
         } catch (Exception e) {
-            log.error("Got error while adding new user to prenotation ({} -> {}): {}", userId, prenotationId,
-                    e.getMessage());
+            log.error("Got error while adding new user to prenotation ({} -> {}): {}", userId, prenotationId, e.getMessage());
             return ResponseEntity.status(422).body(new BasicResponse(e.getMessage(), "ALREADY_EXISTS"));
         }
     }
