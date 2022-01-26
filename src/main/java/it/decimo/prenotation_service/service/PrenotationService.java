@@ -38,12 +38,8 @@ public class PrenotationService {
     private boolean hasEnoughFreeSeats(int merchantId, int seats) {
         try {
             final var data = merchantServiceConnector.getMerchant(merchantId);
-            final var currentOccupation = getPrenotationsForMerchant(merchantId).stream()
-                    .filter(Prenotation::isValid)
-                    .map(Prenotation::getAmount)
-                    .reduce(0, Integer::sum);
-            log.info("Merchant {} has {} total seats, {} seats requested", merchantId, data.getTotalSeats(), seats);
-            return currentOccupation + seats <= data.getTotalSeats();
+            log.info("Merchant {} has {} free seats over {} total, {} seats requested", merchantId, data.getFreeSeats(), data.getTotalSeats(), seats);
+            return data.getFreeSeats() + seats <= data.getTotalSeats();
         } catch (Exception e) {
             log.error("Failed to retrieve merchant {}", merchantId, e);
             return false;
@@ -60,22 +56,15 @@ public class PrenotationService {
      *                                 specificato
      */
 
-    public Prenotation makePrenotation(PrenotationRequestDto dto)
-            throws NotEnoughSeatsException, NotFoundException {
+    public Prenotation makePrenotation(PrenotationRequestDto dto) throws NotEnoughSeatsException, NotFoundException {
 
         if (!hasEnoughFreeSeats(dto.getMerchantId(), dto.getSeatsAmount())) {
-            throw new NotEnoughSeatsException("Il merchant non ha abbastanza posti liberi");
+            throw new NotEnoughSeatsException("Il merchant richiesto non ha abbastanza spazio");
         }
 
-        log.info("User {} is prenotating {} seats to {}", dto.getRequesterId(), dto.getSeatsAmount(),
-                dto.getMerchantId());
+        log.info("User {} is prenotating {} seats to {}", dto.getRequesterId(), dto.getSeatsAmount(), dto.getMerchantId());
 
-        Prenotation prenotation = Prenotation.builder()
-                .merchantId(dto.getMerchantId())
-                .amount(dto.getSeatsAmount()).dateOfPrenotation(dto.getDate())
-                .enabled(true)
-                .owner(dto.getRequesterId())
-                .build();
+        Prenotation prenotation = Prenotation.builder().merchantId(dto.getMerchantId()).amount(dto.getSeatsAmount()).dateOfPrenotation(dto.getDate()).enabled(true).owner(dto.getRequesterId()).build();
 
         // Imposta la data in formato sql per filtrare le query
         prenotation.setDate(new java.sql.Date(dto.getDate()));
@@ -104,10 +93,8 @@ public class PrenotationService {
      *                                 prenotazione
      * @throws NotEnoughSeatsException Se non ci sono abbastanza posti per aumentare la prenotazione
      */
-    public Prenotation patchPrenotation(Prenotation prenotation, int requesterId)
-            throws NotFoundException, NotAuthorizedException, NotEnoughSeatsException {
-        final var saved = prenotationRepository.findById(prenotation.getId())
-                .orElseThrow(() -> new NotFoundException("La prenotazione non esiste"));
+    public Prenotation patchPrenotation(Prenotation prenotation, int requesterId) throws NotFoundException, NotAuthorizedException, NotEnoughSeatsException {
+        final var saved = prenotationRepository.findById(prenotation.getId()).orElseThrow(() -> new NotFoundException("La prenotazione non esiste"));
 
 
         log.info("Updating prenotation {}", prenotation.getId());
@@ -172,11 +159,7 @@ public class PrenotationService {
      */
     public Collection<Prenotation> getPrenotationsForUser(int userId) {
         log.info("Getting prenotations for user {}", userId);
-        return userPrenotationRepository.findAllByUser(userId).stream()
-                .map(up -> prenotationRepository.findById(up.getPrenotation()).orElse(null))
-                .filter(Objects::nonNull)
-                .peek((prenotation) -> prenotation.setValid(isPrenotationValid(prenotation)))
-                .collect(Collectors.toSet());
+        return userPrenotationRepository.findAllByUser(userId).stream().map(up -> prenotationRepository.findById(up.getPrenotation()).orElse(null)).filter(Objects::nonNull).peek((prenotation) -> prenotation.setValid(isPrenotationValid(prenotation))).collect(Collectors.toSet());
     }
 
     /**
@@ -186,14 +169,11 @@ public class PrenotationService {
      * @throws NotFoundException se non esiste nessun locale con l'id
      *                           specificato
      */
-    public List<Prenotation> getPrenotationsForMerchant(int merchantId)
-            throws NotFoundException {
+    public List<Prenotation> getPrenotationsForMerchant(int merchantId) throws NotFoundException {
         log.info("Requesting prenotations for merchant {}", merchantId);
         try {
             log.info("Collecting prenotations for merchant {}", merchantId);
-            return prenotationRepository.findAllByMerchantId(merchantId).stream()
-                    .peek(prenotation -> prenotation.setValid(isPrenotationValid(prenotation)))
-                    .collect(Collectors.toList());
+            return prenotationRepository.findAllByMerchantId(merchantId).stream().peek(prenotation -> prenotation.setValid(isPrenotationValid(prenotation))).collect(Collectors.toList());
         } catch (Exception e) {
             log.error("Failed to retrieve prenotations for merchant {}", merchantId, e);
             return new ArrayList<>();
@@ -214,12 +194,10 @@ public class PrenotationService {
      *                                     prenotazione
      * @throws PrenotationExpiredException Se la prenotazione è scaduta
      */
-    public void addUserToPrenotation(int requesterId, int prenotationId, int userId) throws NotFoundException,
-            NotAuthorizedException, PrenotationExpiredException, AlreadyPrenotedException {
+    public void addUserToPrenotation(int requesterId, int prenotationId, int userId) throws NotFoundException, NotAuthorizedException, PrenotationExpiredException, AlreadyPrenotedException {
         log.info("Adding user {} to prenotation {}", userId, prenotationId);
 
-        final var prenotation = prenotationRepository.findById(prenotationId)
-                .orElseThrow(() -> new NotFoundException("Missing prenotation of id " + prenotationId));
+        final var prenotation = prenotationRepository.findById(prenotationId).orElseThrow(() -> new NotFoundException("Missing prenotation of id " + prenotationId));
 
         if (prenotation.getOwner() != requesterId) {
             log.error("User {} is not the owner of prenotation {}", requesterId, prenotationId);
@@ -231,8 +209,7 @@ public class PrenotationService {
             throw new PrenotationExpiredException("The prenotation is not expired");
         }
 
-        if (userPrenotationRepository.findAllByUser(userId).stream()
-                .anyMatch(p -> p.getPrenotation() == prenotationId)) {
+        if (userPrenotationRepository.findAllByUser(userId).stream().anyMatch(p -> p.getPrenotation() == prenotationId)) {
             log.error("User {} is already prenotated for prenotation {}", userId, prenotationId);
             throw new AlreadyPrenotedException("User already prenotated");
         }
