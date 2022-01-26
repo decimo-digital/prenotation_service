@@ -64,7 +64,7 @@ public class PrenotationService {
             throws NotEnoughSeatsException, NotFoundException {
 
         if (!hasEnoughFreeSeats(dto.getMerchantId(), dto.getSeatsAmount())) {
-            throw new NotEnoughSeatsException();
+            throw new NotEnoughSeatsException("Il merchant non ha abbastanza posti liberi");
         }
 
         log.info("User {} is prenotating {} seats to {}", dto.getRequesterId(), dto.getSeatsAmount(),
